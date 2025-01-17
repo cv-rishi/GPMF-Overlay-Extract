@@ -13,6 +13,7 @@
 
 ### Python packages
 
+- libraqm (needed by [Pillow](https://pypi.org/project/Pillow/))
 - Install the requirements in the `requirements.txt` file.
   - `pip install -r requirements.txt`
 
@@ -20,6 +21,29 @@
 
 - Install the requirements in the `package.json` file.
   - `npm install`
+
+
+The Roboto font needs to be installed on your system. You could install it with one of the following commands maybe.
+
+```bash
+pacman -S ttf-roboto
+apt install truetype-roboto
+apt install fonts-roboto
+```
+
+#### (Optional) Installing pycairo
+
+Optionally, install `pycairo`
+
+```shell
+venv/bin/pip install pycairo==1.23.0
+```
+
+You might need to install some system libraries - This is what the pycairo docs suggest: 
+
+Ubuntu/Debian: `sudo apt install libcairo2-dev pkg-config python3-dev`
+
+macOS/Homebrew: `brew install cairo pkg-config`
 
 ### Changes
 

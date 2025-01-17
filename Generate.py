@@ -17,7 +17,7 @@ except Exception:
 
 from src.Checks.check_binry import CheckBinary
 from src.Checks.arguments import GPMF_arguments
-from src.ExtractExif.ExtractEif import ExtractExif
+# from src.ExtractExif.ExtractEif import ExtractExif
 from src.Checks.log import log, fatal
 
 if __name__ == "__main__":
