@@ -65,8 +65,8 @@ if __name__ == "__main__":
             video_output_dir = output_dir / video_name
             video_output_dir.mkdir(parents=True, exist_ok=True)
 
-            # extractor = ExtractEif(input_file=input_file, output_dir=video_output_dir)
-            # extractor.extract_telemetry()
+            extractor = ExtractEif(input_file=input_file, output_dir=video_output_dir)
+            extractor.extract_telemetry()
             output_video_path = video_output_dir / "output.mp4"
             debug_file_path = video_output_dir / "debug.txt"
 
