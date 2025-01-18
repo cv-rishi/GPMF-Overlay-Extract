@@ -15,7 +15,7 @@ def GPMF_arguments(args=None):
     parser.add_argument(
         "input",
         type=pathlib.Path,
-        nargs="?",
+        nargs="+",
         help="Input MP4 file",
     )
     parser.add_argument(
@@ -24,10 +24,12 @@ def GPMF_arguments(args=None):
         help="Output Video File - MP4/MOV/WEBM format, need to configure ffmpeg profile for other formats other than MP4",
     )
 
-    parser.add_argument("layout-xml", type=pathlib.Path, help="Use XML File for layout")
+    parser.add_argument(
+        "--layout-xml", type=pathlib.Path, help="Use XML File for layout"
+    )
 
     parser.add_argument(
-        "overlay-flags", type=str, help="Overlay flags, comma separated list of flags"
+        "--overlay-flags", type=str, help="Overlay flags, comma separated list of flags"
     )
 
     args = parser.parse_args(args)
