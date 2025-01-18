@@ -47,4 +47,4 @@ macOS/Homebrew: `brew install cairo pkg-config`
 
 ### Changes
 
-- [gopro-dashboard-overlay](https://github.com/time4tea/gopro-dashboard-overlay) to use ACCL, GRYO, and CORI data. [weird bug, they weren't loading, something about checking if a set was empty but it was not]
+- [gopro-dashboard-overlay](https://github.com/time4tea/gopro-dashboard-overlay) to use ACCL, GRYO, and CORI data. (weird bug, they weren't loading, something about checking if a set was empty but it was not)
