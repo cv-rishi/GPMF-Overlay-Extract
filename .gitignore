@@ -6,11 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
-
 # Ignore specific log and error files
 bot.err
 bot.log
-
 
 # Ignore all database files
 *.db
@@ -120,4 +118,23 @@ token.env
 # Other
 .DS_Store
 Thumbs.db
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log
+.npm/
+.parcel-cache/
+
+# Output directory
+.output
+output/
+
+# Lock files (optional, depending on your preference)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
