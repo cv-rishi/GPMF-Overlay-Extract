@@ -1,30 +1,16 @@
-Package            Version
------------------- ----------
-aiohappyeyeballs   2.4.4
-aiohttp            3.11.11
-aiosignal          1.3.2
-attrs              24.3.0
-certifi            2024.12.14
-charset-normalizer 3.4.1
-cytoolz            1.0.1
-fitdecode          0.10.0
-frozenlist         1.5.0
-geographiclib      1.52
-geotiler           0.15.0
-gpxpy              1.6.1
-idna               3.10
-multidict          6.1.0
-Pillow             10.1.0
-Pint               0.22
-pip                24.0
-progressbar2       4.2.0
-propcache          0.2.1
-pycairo            1.23.0
-python-utils       3.9.1
-requests           2.31.0
-setuptools         75.8.0
-sqlitedict         2.1.0
-toolz              1.0.0
-typing_extensions  4.12.2
-urllib3            2.3.0
-yarl               1.18.3
+# for drawing text/images
+pillow==10.1.0
+# pint for unit conversion
+pint==0.22
+# for drawing little map
+geotiler==0.15
+# for loading GPX files
+gpxpy==1.6.1
+# for loading FIT files
+fitdecode==0.10.0
+# for lat/lon/speed calcs
+geographiclib==1.52
+progressbar2==4.2.0
+requests==2.31.0
+pycairo==1.23.0
+sqlitedict==2.1.0
