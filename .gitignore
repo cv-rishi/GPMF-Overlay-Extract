@@ -138,3 +138,14 @@ package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
+# Ignore video files
+*.mp4
+*.MP4
+*.mov
+*.MOV
+
+# Ignore JSON files
+*.json
+*.JSON
+
+
