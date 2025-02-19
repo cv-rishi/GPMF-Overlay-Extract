@@ -1,0 +1,24 @@
+python Generate.py \
+    --front_videos \
+    /media/teddy-bear/Extreme\ SSD/2W\ -\ Data_Capture/Day1_03_02_2025/Front_View/Day1_3-2-25_Morning/GX010406.MP4 \
+    /media/teddy-bear/Extreme\ SSD/2W\ -\ Data_Capture/Day1_03_02_2025/Front_View/Day1_3-2-25_Morning/GX020406.MP4 \
+    /media/teddy-bear/Extreme\ SSD/2W\ -\ Data_Capture/Day1_03_02_2025/Front_View/Day1_3-2-25_Morning/GX030406.MP4 \
+    /media/teddy-bear/Extreme\ SSD/2W\ -\ Data_Capture/Day1_03_02_2025/Front_View/Day1_3-2-25_Morning/GX040406.MP4 \
+    /media/teddy-bear/Extreme\ SSD/2W\ -\ Data_Capture/Day1_03_02_2025/Front_View/Day1_3-2-25_Morning/GX050406.MP4 \
+    --back_videos \
+    /media/teddy-bear/Extreme\ SSD/2W\ -\ Data_Capture/Day1_03_02_2025/HelmetView/Day1_Helmet_morning/GX010404.MP4 \
+    /media/teddy-bear/Extreme\ SSD/2W\ -\ Data_Capture/Day1_03_02_2025/HelmetView/Day1_Helmet_morning/GX020404.MP4 \
+    /media/teddy-bear/Extreme\ SSD/2W\ -\ Data_Capture/Day1_03_02_2025/HelmetView/Day1_Helmet_morning/GX030404.MP4 \
+    /media/teddy-bear/Extreme\ SSD/2W\ -\ Data_Capture/Day1_03_02_2025/HelmetView/Day1_Helmet_morning/GX040404.MP4 \
+    /media/teddy-bear/Extreme\ SSD/2W\ -\ Data_Capture/Day1_03_02_2025/HelmetView/Day1_Helmet_morning/GX050404.MP4 \
+    --helmet_videos \
+    /media/teddy-bear/Extreme\ SSD/2W\ -\ Data_Capture/Day1_03_02_2025/RearView/Day1_Rear_morning/GX010406.MP4 \
+    /media/teddy-bear/Extreme\ SSD/2W\ -\ Data_Capture/Day1_03_02_2025/RearView/Day1_Rear_morning/GX020406.MP4 \
+    /media/teddy-bear/Extreme\ SSD/2W\ -\ Data_Capture/Day1_03_02_2025/RearView/Day1_Rear_morning/GX030406.MP4 \
+    /media/teddy-bear/Extreme\ SSD/2W\ -\ Data_Capture/Day1_03_02_2025/RearView/Day1_Rear_morning/GX040406.MP4 \
+    /media/teddy-bear/Extreme\ SSD/2W\ -\ Data_Capture/Day1_03_02_2025/RearView/Day1_Rear_morning/GX050406.MP4 \
+    --glasses_video \
+    /media/teddy-bear/Extreme\ SSD/2W\ -\ Data_Capture/Day1_03_02_2025/AriaView/Aria_data/azhar0302205.mp4 \
+    --driver_name "Morning"
+
+

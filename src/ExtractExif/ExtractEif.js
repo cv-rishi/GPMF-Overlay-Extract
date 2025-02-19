@@ -1,44 +1,53 @@
-const gpmfExtract = require('gpmf-extract');
-const goproTelemetry = require('gopro-telemetry');
-const fs = require('fs');
-const path = require('path');
+const gpmfExtract = require("gpmf-extract");
+const goproTelemetry = require("gopro-telemetry");
+const fs = require("fs");
+const path = require("path");
 
 if (process.argv.length < 3) {
-    console.error("Usage: node ExtractEif.js <inputFile>");
-    process.exit(1);
+	console.error("Usage: node ExtractEif.js <inputFile>");
+	process.exit(1);
 }
 
 const inputFile = process.argv[2];
 
 try {
-    const fileStream = fs.createReadStream(inputFile);
-    
-    const chunks = [];
-    fileStream.on('data', chunk => {
-        chunks.push(chunk);
-    });
+	const fileStream = fs.createReadStream(inputFile);
 
-    fileStream.on('end', () => {
-        const fileBuffer = Buffer.concat(chunks);
+	const chunks = [];
+	fileStream.on("data", (chunk) => {
+		chunks.push(chunk);
+	});
 
-        gpmfExtract(fileBuffer)
-            .then(extracted => {
-                goproTelemetry(extracted, {}, telemetry => {
-                    console.log(JSON.stringify(telemetry));
-                });
-            })
-            .catch(error => {
-                console.error("Error extracting telemetry:", error);
-                process.exit(1);
-            });
-    });
+	fileStream.on("end", () => {
+		const fileBuffer = Buffer.concat(chunks);
 
-    fileStream.on('error', error => {
-        console.error("Error reading input file:", error);
-        process.exit(1);
-    });
+		gpmfExtract(fileBuffer)
+			.then((extracted) => {
+				goproTelemetry(extracted, {}, (telemetry) => {
+					// Remove FACE*.json data
+					if (telemetry[1] && telemetry[1].streams) {
+						for (const streamName in telemetry[1].streams) {
+							if (streamName.startsWith("FACE")) {
+								delete telemetry[1].streams[streamName];
+							}
+						}
+					}
+
+					console.log(JSON.stringify(telemetry));
+				});
+			})
+			.catch((error) => {
+				console.error("Error extracting telemetry:", error);
+				process.exit(1);
+			});
+	});
+
+	fileStream.on("error", (error) => {
+		console.error("Error reading input file:", error);
+		process.exit(1);
+	});
 } catch (error) {
-    console.error("Unexpected error:", error);
-    process.exit(1);
+	console.error("Unexpected error:", error);
+	process.exit(1);
 }
 

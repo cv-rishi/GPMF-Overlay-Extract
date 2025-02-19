@@ -1,325 +1,76 @@
-# import json
-# import subprocess
-# from datetime import datetime
-# import os
-# from typing import List, Dict
-#
-#
-# def load_shut_data(file_path: str) -> List[Dict]:
-#     """Load and parse SHUT telemetry data from JSON file."""
-#     with open(file_path, "r") as f:
-#         data = json.load(f)
-#     return data["samples"]
-#
-#
-# def find_common_time(data_list: List[List[Dict]]) -> datetime:
-#     """Find the earliest common timestamp across all videos."""
-#     timestamps = []
-#     for data in data_list:
-#         # Remove 'Z' and parse as ISO format
-#         timestamp = datetime.fromisoformat(data[0]["date"].replace("Z", "+00:00"))
-#         timestamps.append(timestamp)
-#     return max(timestamps)  # Use latest start time as common point
-#
-#
-# def calculate_offsets(
-#     data_list: List[List[Dict]], common_start: datetime
-# ) -> List[float]:
-#     """Calculate time offsets for each video relative to common start time."""
-#     offsets = []
-#     for data in data_list:
-#         first_time = datetime.fromisoformat(data[0]["date"].replace("Z", "+00:00"))
-#         offset = (first_time - common_start).total_seconds()
-#         offsets.append(abs(offset))  # Use absolute value for ffmpeg
-#     return offsets
-#
-#
-# def build_filter_complex(num_videos: int) -> str:
-#     """Generate filter_complex string based on number of videos."""
-#     if num_videos == 2:
-#         return "hstack=inputs=2"  # Side by side
-#     elif num_videos == 3:
-#         return "[0][1]hstack=inputs=2[top];[top][2]vstack=inputs=2"  # 2 on top, 1 on bottom
-#     elif num_videos == 4:
-#         return "[0][1]hstack=inputs=2[top];[2][3]hstack=inputs=2[bottom];[top][bottom]vstack=inputs=2"  # 2x2 grid
-#     else:
-#         raise ValueError(f"Unsupported number of videos: {num_videos}")
-#
-#
-# def sync_videos(video_paths: List[str], offsets: List[float], output_path: str):
-#     """Sync and combine multiple videos using ffmpeg."""
-#     # Create temporary files for trimmed videos
-#     temp_files = []
-#     try:
-#         # First pass: Trim videos to sync points
-#         for i, (video, offset) in enumerate(zip(video_paths, offsets)):
-#             temp_file = f"temp_video_{i}.mp4"
-#             temp_files.append(temp_file)
-#
-#             trim_cmd = [
-#                 "ffmpeg",
-#                 "-y",
-#                 "-i",
-#                 video,
-#                 "-ss",
-#                 str(offset),
-#                 "-c:v",
-#                 "copy",
-#                 "-c:a",
-#                 "copy",
-#                 temp_file,
-#             ]
-#             subprocess.run(trim_cmd, check=True)
-#
-#         # Second pass: Combine videos
-#         filter_complex = build_filter_complex(len(video_paths))
-#
-#         combine_cmd = ["ffmpeg", "-y"]
-#         # Add input files
-#         for temp_file in temp_files:
-#             combine_cmd.extend(["-i", temp_file])
-#
-#         combine_cmd.extend(
-#             [
-#                 "-filter_complex",
-#                 filter_complex,
-#                 "-c:v",
-#                 "h264_nvenc",
-#                 "-preset",
-#                 "p4",  # RTX optimized preset
-#                 "-tune",
-#                 "hq",
-#                 "-rc",
-#                 "vbr",  # Variable bitrate
-#                 "-cq",
-#                 "23",  # Quality-based VBR
-#                 "-b:v",
-#                 "20M",  # Maximum bitrate
-#                 "-maxrate",
-#                 "25M",
-#                 "-bufsize",
-#                 "25M",
-#                 "-profile:v",
-#                 "high",
-#                 "-spatial_aq",
-#                 "1",
-#                 "-temporal_aq",
-#                 "1",
-#                 output_path,
-#             ]
-#         )
-#
-#         subprocess.run(combine_cmd, check=True)
-#
-#     finally:
-#         # Clean up temp files
-#         for temp_file in temp_files:
-#             if os.path.exists(temp_file):
-#                 os.remove(temp_file)
-#
-#
-# def main():
-#     # File paths configuration
-#     shut_files = ["front_View.json", "helmet_view.json"]
-#
-#     video_files = [
-#         "/media/teddy-bear/Extreme SSD/2W - Data_Capture/Front_view/GH019806.MP4",
-#         "/media/teddy-bear/Extreme SSD/2W - Data_Capture/Helmet_view/GH019814.MP4",
-#     ]
-#
-#     output_file = "synced_videos.mp4"
-#
-#     try:
-#         # Load SHUT data for all videos
-#         data_list = [load_shut_data(file) for file in shut_files]
-#
-#         # Find common start time
-#         common_start = find_common_time(data_list)
-#         print(f"Common start time: {common_start}")
-#
-#         # Calculate offsets
-#         offsets = calculate_offsets(data_list, common_start)
-#         print(f"Video offsets: {offsets}")
-#
-#         # Sync and combine videos
-#         sync_videos(video_files, offsets, output_file)
-#         print(f"Successfully created synchronized video: {output_file}")
-#
-#     except Exception as e:
-#         print(f"Error: {str(e)}")
-#
-#
-# if __name__ == "__main__":
-#     main()
-
-
+import asyncio
+from pathlib import Path
+from typing import List, Tuple, Dict
 import json
-import subprocess
-from datetime import datetime
-import os
-from typing import List, Dict
+from .qr_decode import fetch_video_timestamps
+from .trim_videos import extract_video_metadata, trim_videos
 
 
-class VideoSync:
-    def __init__(self, video_paths: List[str], shut_files: List[str], output_path: str):
+class VideoSynchronizer:
+    def __init__(self, videos: List[str], output_dir):
+        self.videos = videos
+        self.video_info = {}
+        self.video_timestamps: Dict[str, List[Tuple[int, float]]] = {}
+        self.first_qr_timestamps = {}
+        self.output_dir = output_dir
+
+    def process_timestamps(self, timestamps: List[List[int]]) -> Tuple[int, float]:
+        """Extract first unique timestamp and its frame number."""
+        if not timestamps:
+            return None
+        return tuple(timestamps[0])  # Returns (frame, timestamp)
+
+    async def sync(self):
         """
-        Initialize the VideoSync object.
+        Synchronize videos by trimming them to the same length based on the first QR code timestamp found in each video.
 
-        :param video_paths: List of paths to the video files.
-        :param shut_files: List of paths to the SHUT telemetry JSON files.
-        :param output_path: Path to save the synchronized output video.
+        Outputs trimmed videos to the specified output directory.
+
+        Raises:
+            ValueError: If no QR codes are found in the videos
+            OSError: If FFmpeg fails to run on a video
         """
-        self.video_paths = video_paths
-        self.shut_files = shut_files
-        self.output_path = output_path
+        await extract_video_metadata(self.videos, self.video_info)
 
-    def load_shut_data(self, file_path: str) -> List[Dict]:
-        """Load and parse SHUT telemetry data from a JSON file."""
-        with open(file_path, "r") as f:
-            data = json.load(f)
-        return data["samples"]
+        print("Detecting QR codes in videos...")
+        for video in self.videos:
+            timestamps = await fetch_video_timestamps(video)
+            self.video_timestamps[video] = timestamps
+            if timestamps:
+                self.first_qr_timestamps[video] = self.process_timestamps(timestamps)
+            else:
+                print(
+                    f"No QR codes found in {video}================================================================================================="
+                )
 
-    def find_common_time(self, data_list: List[List[Dict]]) -> datetime:
-        """Find the earliest common timestamp across all videos."""
-        timestamps = []
-        for data in data_list:
-            timestamp = datetime.fromisoformat(data[0]["date"].replace("Z", "+00:00"))
-            timestamps.append(timestamp)
-        return max(timestamps)  # Use the latest start time as the common point
+        if not self.first_qr_timestamps:
+            raise ValueError("No QR codes found in videos")
 
-    def calculate_offsets(
-        self, data_list: List[List[Dict]], common_start: datetime
-    ) -> List[float]:
-        """Calculate time offsets for each video relative to the common start time."""
-        offsets = []
-        for data in data_list:
-            first_time = datetime.fromisoformat(data[0]["date"].replace("Z", "+00:00"))
-            offset = (first_time - common_start).total_seconds()
-            offsets.append(abs(offset))  # Use absolute value for ffmpeg
-        return offsets
+        latest_timestamp = max(ts[1] for ts in self.first_qr_timestamps.values())
 
-    def build_filter_complex(self, num_videos: int) -> str:
-        """Generate a filter_complex string based on the number of videos."""
-        if num_videos == 2:
-            return "hstack=inputs=2"  # Side by side
-        elif num_videos == 3:
-            return "[0][1]hstack=inputs=2[top];[top][2]vstack=inputs=2"  # 2 on top, 1 on bottom
-        elif num_videos == 4:
-            return "[0][1]hstack=inputs=2[top];[2][3]hstack=inputs=2[bottom];[top][bottom]vstack=inputs=2"  # 2x2 grid
-        else:
-            raise ValueError(f"Unsupported number of videos: {num_videos}")
+        trim_points = {}
+        for video, (frame, timestamp) in self.first_qr_timestamps.items():
+            fps = self.video_info[video]["exact_framerate"]
+            time_diff = latest_timestamp - timestamp
+            frame_offset = int(time_diff * fps)
+            trim_points[video] = [frame + frame_offset, latest_timestamp]
 
-    def sync_videos(self):
-        """Sync and combine multiple videos using ffmpeg."""
-        # Load SHUT data for all videos
-        data_list = [self.load_shut_data(file) for file in self.shut_files]
+        with open("trim_points.json", "w") as f:
+            json.dump(trim_points, f)
 
-        # Find the common start time
-        common_start = self.find_common_time(data_list)
-        print(f"Common start time: {common_start}")
+        trimmed_videos = await trim_videos(
+            trim_points, self.video_info, self.output_dir
+        )
 
-        # Calculate offsets for each video
-        offsets = self.calculate_offsets(data_list, common_start)
-        print(f"Video offsets: {offsets}")
-
-        # Create temporary files for trimmed videos
-        temp_files = []
-        try:
-            # First pass: Trim videos to sync points
-            for i, (video, offset) in enumerate(zip(self.video_paths, offsets)):
-                temp_file = f"temp_video_{i}.mp4"
-                temp_files.append(temp_file)
-
-                trim_cmd = [
-                    "ffmpeg",
-                    "-y",
-                    "-i",
-                    video,
-                    "-ss",
-                    str(offset),
-                    "-c:v",
-                    "copy",
-                    "-c:a",
-                    "copy",
-                    temp_file,
-                ]
-                subprocess.run(trim_cmd, check=True)
-
-            # Second pass: Combine videos
-            filter_complex = self.build_filter_complex(len(self.video_paths))
-
-            combine_cmd = ["ffmpeg", "-y"]
-            # Add input files
-            for temp_file in temp_files:
-                combine_cmd.extend(["-i", temp_file])
-
-            combine_cmd.extend(
-                [
-                    "-filter_complex",
-                    filter_complex,
-                    "-c:v",
-                    "h264_nvenc",
-                    "-preset",
-                    "p4",  # RTX optimized preset
-                    "-tune",
-                    "hq",
-                    "-rc",
-                    "vbr",  # Variable bitrate
-                    "-cq",
-                    "23",  # Quality-based VBR
-                    "-b:v",
-                    "20M",  # Maximum bitrate
-                    "-maxrate",
-                    "25M",
-                    "-bufsize",
-                    "25M",
-                    "-profile:v",
-                    "high",
-                    "-spatial_aq",
-                    "1",
-                    "-temporal_aq",
-                    "1",
-                    self.output_path,
-                ]
-            )
-
-            subprocess.run(combine_cmd, check=True)
-            print(f"Successfully created synchronized video: {self.output_path}")
-
-        finally:
-            # Clean up temp files
-            for temp_file in temp_files:
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
+        return trimmed_videos
 
 
 if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Sync multiple GoPro videos.")
-    parser.add_argument(
-        "--videos",
-        nargs="+",
-        required=True,
-        help="List of video file paths.",
-    )
-    parser.add_argument(
-        "--shut-files",
-        nargs="+",
-        required=True,
-        help="List of SHUT telemetry JSON file paths.",
-    )
-    parser.add_argument(
-        "--output",
-        required=True,
-        help="Output path for the synchronized video.",
-    )
-
-    args = parser.parse_args()
-
-    video_sync = VideoSync(
-        video_paths=args.videos,
-        shut_files=args.shut_files,
-        output_path=args.output,
-    )
-    video_sync.sync_videos()
+    videos = [
+        "/media/teddy-bear/Extreme SSD/test_videos/aria.mp4",
+        "/media/teddy-bear/Extreme SSD/test_videos/rear.MP4",
+        "/media/teddy-bear/Extreme SSD/test_videos/helmet.MP4",
+        "/media/teddy-bear/Extreme SSD/test_videos/headlight.MP4",
+    ]
+    synchronizer = VideoSynchronizer(videos)
+    asyncio.run(synchronizer.sync())
