@@ -27,6 +27,7 @@ python Generate.py \
     --glasses_video \
     /media/teddy-bear/Extreme\ SSD/2W\ -\ Data_Capture/Day1_03_02_2025/AriaView/Aria_data/azhar0302205.mp4 \
     --driver_name "Morning"
+    --output output
 ```
 
 ## Requirements
