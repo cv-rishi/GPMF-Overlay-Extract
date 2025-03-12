@@ -1,6 +1,5 @@
 import argparse
 import pathlib
-import sys
 from .log import fatal
 
 
@@ -40,11 +39,19 @@ def GPMF_arguments(args=None):
     parser.add_argument(
         "--driver_name", type=str, required=True, help="Name of the driver"
     )
+
     parser.add_argument(
-        "--output",
+        "--glasses_type",
+        type=str,
+        choices=["aria", "pupil"],
+        required=True,
+    )
+    parser.add_argument(
+        "--output_dir",
         type=pathlib.Path,
         help="Output directory for processed videos",
     )
+
     parser.add_argument(
         "--layout-xml", type=pathlib.Path, help="Use XML File for layout"
     )

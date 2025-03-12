@@ -6,8 +6,6 @@ try:
     from pathlib import Path
     import datetime
     import os
-    from datetime import datetime
-    from typing import List
     import json
     import asyncio
 
@@ -43,7 +41,7 @@ def create_directory_structure(base_dir: Path, driver_name: str) -> dict:
         Dictionary containing paths for each video type
     """
     # Create date folder (e.g., Day1_05_02_2024)
-    current_date = datetime.now().strftime("Day1_%d_%m_%Y")
+    current_date = datetime.datetime.now().strftime("Day1_%d_%m_%Y")
     date_dir = base_dir / current_date
 
     # Create driver folder
@@ -54,7 +52,7 @@ def create_directory_structure(base_dir: Path, driver_name: str) -> dict:
         "front": driver_dir / "FrontView",
         "helmet": driver_dir / "HelmentView",
         "back": driver_dir / "RearView",
-        "glasses": driver_dir / "AriaView",
+        "glasses": driver_dir / "GLassesView",
     }
 
     # Create all directories
@@ -117,10 +115,10 @@ def extract_data(
         video_type: Type of the video (front, helmet, back)
         driver_name: Name of the driver
     """
-    if video_type == "glasses":
+    if video_type == "aria" or video_type == "pupil":
         return
 
-    current_date = datetime.now().strftime("Day1_%d_%m_%Y")
+    current_date = datetime.datetime.now().strftime("Day1_%d_%m_%Y")
     # Determine base output directory
     if base_output_dir is None:
         base_output_dir = Path("telemetry_data")
@@ -315,8 +313,12 @@ if __name__ == "__main__":
         "front": args.front_videos,
         "helmet": args.helmet_videos,
         "back": args.back_videos,
-        "glasses": args.glasses_videos,
     }
+
+    if args.glasses_type == "aria":
+        required_dirs.update({"aria": args.glasses_videos})
+    elif args.glasses_type == "pupil":
+        required_dirs.update({"pupil": args.glasses_videos})
 
     if args.output_dir:
         output_dir = Path(args.output_dir)
@@ -328,7 +330,7 @@ if __name__ == "__main__":
     for view, directory in required_dirs.items():
         assert_file_exists(directory)
         log(f"Processing {view} video files from {directory}")
-        # extract_data(directory, view, driver, output_dir)
+        extract_data(directory, view, driver, output_dir)
 
     log("GPMF extraction completed")
 
@@ -336,32 +338,37 @@ if __name__ == "__main__":
         "front": args.front_videos[0],
         "helmet": args.helmet_videos[0],
         "back": args.back_videos[0],
-        "glasses": args.glasses_videos[0],
     }
 
-    print("Starting video synchronization With the following videos:")
+    if args.glasses_type == "aria":
+        sorted_perspectives["aria"] = args.glasses_videos[0]
 
-    for video in sorted_perspectives.values():
-        print(video)
-
-    synchronizer = VideoSynchronizer(
-        [
-            str(sorted_perspectives["glasses"]),
-            str(sorted_perspectives["helmet"]),
-            str(sorted_perspectives["front"]),
-            str(sorted_perspectives["back"]),
-        ],
-        "trimmed_videos",
-    )
-
-    asyncio.run(synchronizer.sync_videos())
-
-    log("Video synchronization completed")
-
-    log("Begin merging")
-
-    merge_all_perspectives(
-        required_dirs,
-        output_dir,
-        args.driver_name,
-    )
+    elif args.glasses_type == "pupil":
+        sorted_perspectives["pupil"] = args.glasses_videos[0]
+    #
+    # # print("Starting video synchronization With the following videos:")
+    # #
+    # # for video in sorted_perspectives.values():
+    # #     print(video)
+    # #
+    # # synchronizer = VideoSynchronizer(
+    # #     [
+    # #         str(sorted_perspectives["glasses"]),
+    # #         str(sorted_perspectives["helmet"]),
+    # #         str(sorted_perspectives["front"]),
+    # #         str(sorted_perspectives["back"]),
+    # #     ],
+    # #     "trimmed_videos",
+    # # )
+    # #
+    # # asyncio.run(synchronizer.sync())
+    # #
+    # # log("Video synchronization completed")
+    # #
+    # # log("Begin merging")
+    # #
+    # # merge_all_perspectives(
+    # #     required_dirs,
+    # #     output_dir,
+    # #     args.driver_name,
+    # # )
